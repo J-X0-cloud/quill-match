@@ -6,7 +6,9 @@ add_library(quill
     itch/codec.cpp
     itch/publisher.cpp
     itch/book_builder.cpp
-    sim/order_flow.cpp)
+    sim/order_flow.cpp
+    fix/message.cpp
+    fix/gateway.cpp)
 add_library(quill::quill ALIAS quill)
 
 target_include_directories(quill PUBLIC

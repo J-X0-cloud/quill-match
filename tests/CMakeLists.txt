@@ -25,7 +25,9 @@ add_executable(quill_tests
     engine_runner_test.cpp
     itch_codec_test.cpp
     itch_feed_test.cpp
-    order_flow_test.cpp)
+    order_flow_test.cpp
+    fix_message_test.cpp
+    fix_gateway_test.cpp)
 
 target_include_directories(quill_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(quill_tests PRIVATE quill::quill GTest::gtest_main)
