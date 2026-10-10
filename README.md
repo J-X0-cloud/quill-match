@@ -167,12 +167,13 @@ ThreadSanitizer (`-DQUILL_TSAN=ON`; on recent kernels run it with
 ./build/apps/quill fix < examples/fix_session.txt
 ```
 
-Example FIX exchange (SendingTime removed for brevity):
+Example FIX exchange (one ExecutionReport wrapped over two lines; BodyLength and CheckSum
+cover the SendingTime field, so they change from run to run):
 
 ```
 in : 8=FIX.4.4|35=D|49=BOB|56=QUILL|34=2|11=B-1|55=AAPL|54=1|38=250|40=2|44=189.60|59=3|
-out: 8=FIX.4.4|9=155|35=8|49=QUILL|56=BOB|34=3|37=3|11=B-1|17=E4|150=F|39=1|55=AAPL|54=1|
-     38=250|40=2|44=189.60|31=189.50|32=100|151=150|14=100|6=189.5|10=206|
+out: 8=FIX.4.4|9=155|35=8|49=QUILL|56=BOB|34=3|52=20261010-04:34:05.949|37=3|11=B-1|17=E4|
+     150=F|39=1|55=AAPL|54=1|38=250|40=2|44=189.60|31=189.50|32=100|151=150|14=100|6=189.5|10=223|
 ```
 
 Gateway tag support: `11` ClOrdID, `41` OrigClOrdID, `55` Symbol, `54` Side (1/2),
