@@ -17,6 +17,9 @@ struct SimulationOptions {
     std::uint64_t seed = 1;
     std::uint64_t warmup = 100'000;
     bool threaded = false;
+    /// Producer pacing in commands per second for threaded runs; zero means flat out.
+    /// Unpaced runs saturate the queue, so their latency is mostly time spent queued.
+    std::uint64_t rate = 0;
     std::size_t queue_capacity = 1 << 16;
     int pin_cpu = -1;
     std::optional<std::string> itch_out;

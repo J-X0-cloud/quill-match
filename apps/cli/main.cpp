@@ -18,6 +18,7 @@ commands:
              --instruments N     number of instruments (default 4)
              --seed N            order flow seed (default 1)
              --threaded          feed a matching thread through the SPSC queue
+             --rate N            pace the producer at N commands/s (--threaded only)
              --queue-capacity N  ring size for --threaded (default 65536)
              --pin-cpu N         pin the matching thread (Linux, --threaded only)
              --itch-out FILE     also publish the ITCH feed to FILE

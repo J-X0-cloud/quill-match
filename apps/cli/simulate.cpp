@@ -80,7 +80,17 @@ SimulationResult simulate(const SimulationOptions& options, std::ostream& out) {
     if (options.threaded) {
         EngineRunner runner(engine, options.queue_capacity);
         runner.start(options.pin_cpu);
+        const Timestamp first_send = SteadyClock::read();
+        const double interval_ns = options.rate > 0 ? 1e9 / static_cast<double>(options.rate) : 0;
         for (std::uint64_t i = options.warmup; i < commands.size(); ++i) {
+            if (options.rate > 0) {
+                const auto due =
+                    first_send +
+                    static_cast<Timestamp>(static_cast<double>(i - options.warmup) * interval_ns);
+                while (SteadyClock::read() < due) {
+                    cpu_relax();
+                }
+            }
             result.back_pressure_spins += runner.submit(commands[i]);
         }
         runner.stop();
@@ -116,9 +126,10 @@ SimulationResult simulate(const SimulationOptions& options, std::ostream& out) {
 }
 
 int simulate_command(const std::vector<std::string>& args, std::ostream& out) {
-    const Args parsed(
-        args, {"orders", "instruments", "seed", "warmup", "queue-capacity", "pin-cpu", "itch-out"},
-        {"threaded"});
+    const Args parsed(args,
+                      {"orders", "instruments", "seed", "warmup", "queue-capacity", "pin-cpu",
+                       "itch-out", "rate"},
+                      {"threaded"});
     if (!parsed.positionals().empty()) {
         throw UsageError("simulate takes no positional arguments");
     }
@@ -133,6 +144,10 @@ int simulate_command(const std::vector<std::string>& args, std::ostream& out) {
         static_cast<std::size_t>(parsed.integer("queue-capacity", 1 << 16, 2, 1 << 26));
     options.pin_cpu = static_cast<int>(parsed.integer("pin-cpu", -1, -1, 4'095));
     options.itch_out = parsed.value("itch-out");
+    options.rate = static_cast<std::uint64_t>(parsed.integer("rate", 0, 0, 1'000'000'000));
+    if (options.rate > 0 && !options.threaded) {
+        throw UsageError("--rate paces the producer thread and requires --threaded");
+    }
 
     const SimulationResult result = simulate(options, out);
     out << '\n'
@@ -143,7 +158,10 @@ int simulate_command(const std::vector<std::string>& args, std::ostream& out) {
         << rate(static_cast<double>(result.commands) / result.seconds) << ")\n";
     out.unsetf(std::ios::fixed);
     if (options.threaded) {
-        out << "  producer back-pressure spins " << with_commas(result.back_pressure_spins) << '\n';
+        out << "  producer "
+            << (options.rate > 0 ? "paced at " + rate(static_cast<double>(options.rate))
+                                 : std::string("unpaced (queue saturates)"))
+            << ", back-pressure spins " << with_commas(result.back_pressure_spins) << '\n';
     }
     out << "\nengine totals (including " << with_commas(options.warmup) << " warm-up commands)\n";
     result.stats.print(out);

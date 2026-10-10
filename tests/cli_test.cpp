@@ -106,6 +106,21 @@ TEST(CliCommands, SimulateCommandPrintsSummary) {
     EXPECT_NE(out.str().find("99.9"), std::string::npos);
     EXPECT_THROW(simulate_command({"--orders", "0"}, out), UsageError);
     EXPECT_THROW(simulate_command({"extra"}, out), UsageError);
+    EXPECT_THROW(simulate_command({"--rate", "1000"}, out), UsageError);
+}
+
+TEST(CliCommands, PacedThreadedSimulation) {
+    SimulationOptions options;
+    options.orders = 2'000;
+    options.warmup = 0;
+    options.instruments = 1;
+    options.threaded = true;
+    options.rate = 200'000;
+    std::ostringstream out;
+    const SimulationResult result = simulate(options, out);
+    EXPECT_EQ(result.latency.count(), 2'000U);
+    // 2000 commands at 200k/s cannot finish faster than 10 ms.
+    EXPECT_GE(result.seconds, 0.009);
 }
 
 TEST(CliCommands, ReplayCommandValidatesArguments) {
