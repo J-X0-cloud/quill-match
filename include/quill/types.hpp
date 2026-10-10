@@ -146,7 +146,9 @@ enum class CancelReason : std::uint8_t {
 }
 
 /// Returns true if a buy at `bid` and a sell at `ask` are marketable against each other.
-[[nodiscard]] constexpr bool crosses(Price bid, Price ask) noexcept { return bid >= ask; }
+[[nodiscard]] constexpr bool crosses(Price bid, Price ask) noexcept {
+    return bid >= ask;
+}
 
 /// True if `price` is at least as aggressive as `limit` for an order on `side`.
 [[nodiscard]] constexpr bool price_acceptable(Side side, Price price, Price limit) noexcept {

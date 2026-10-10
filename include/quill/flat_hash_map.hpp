@@ -34,7 +34,7 @@ class FlatHashMap {
     static_assert(std::is_trivially_copyable_v<Value>,
                   "FlatHashMap moves values with plain copies during backward shift");
 
-public:
+  public:
     explicit FlatHashMap(std::size_t expected = 16) { rehash(capacity_for(expected)); }
 
     [[nodiscard]] std::size_t size() const noexcept { return size_; }
@@ -138,7 +138,7 @@ public:
         }
     }
 
-private:
+  private:
     struct Slot {
         Key key = EmptyKey;
         Value value{};
@@ -151,9 +151,7 @@ private:
     [[nodiscard]] std::size_t home(Key key) const noexcept {
         return static_cast<std::size_t>(mix64(static_cast<std::uint64_t>(key))) & mask_;
     }
-    [[nodiscard]] std::size_t next(std::size_t index) const noexcept {
-        return (index + 1) & mask_;
-    }
+    [[nodiscard]] std::size_t next(std::size_t index) const noexcept { return (index + 1) & mask_; }
     /// Probe distance travelled from `from` to reach `to`, accounting for wrap-around.
     [[nodiscard]] std::size_t distance(std::size_t from, std::size_t to) const noexcept {
         return (to - from) & mask_;

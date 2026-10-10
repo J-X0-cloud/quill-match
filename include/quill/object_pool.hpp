@@ -22,7 +22,7 @@ class ObjectPool {
     static_assert(std::is_trivially_destructible_v<T>,
                   "ObjectPool only manages trivially destructible types");
 
-public:
+  public:
     explicit ObjectPool(std::size_t chunk_size = 4096) : chunk_size_(chunk_size) {
         assert(chunk_size_ > 0);
     }
@@ -65,7 +65,7 @@ public:
     [[nodiscard]] std::size_t live() const noexcept { return live_; }
     [[nodiscard]] std::size_t capacity() const noexcept { return chunks_.size() * chunk_size_; }
 
-private:
+  private:
     struct Slot {
         alignas(T) std::byte bytes[sizeof(T)];
     };
