@@ -105,8 +105,10 @@ class SpscQueue {
 
     /// Approximate when called concurrently with either side.
     [[nodiscard]] std::size_t size() const noexcept {
-        const std::size_t tail = producer_.tail.load(std::memory_order_acquire);
+        // Load head first: the tail only grows, so a tail read afterwards can never be
+        // behind it and the difference cannot wrap around.
         const std::size_t head = consumer_.head.load(std::memory_order_acquire);
+        const std::size_t tail = producer_.tail.load(std::memory_order_acquire);
         return tail - head;
     }
 
