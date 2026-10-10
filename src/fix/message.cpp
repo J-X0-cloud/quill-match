@@ -298,7 +298,7 @@ std::string format_utc_timestamp(Timestamp nanos_since_epoch) {
     const auto day = floor<days>(tp);
     const year_month_day ymd{day};
     const hh_mm_ss<milliseconds> tod{duration_cast<milliseconds>(tp - day)};
-    char buffer[32];
+    char buffer[64];
     std::snprintf(buffer, sizeof(buffer), "%04d%02u%02u-%02lld:%02lld:%02lld.%03lld",
                   static_cast<int>(ymd.year()), static_cast<unsigned>(ymd.month()),
                   static_cast<unsigned>(ymd.day()), static_cast<long long>(tod.hours().count()),

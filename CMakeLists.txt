@@ -19,6 +19,7 @@ option(QUILL_BUILD_BENCHMARKS "Build the Google Benchmark suite" ON)
 option(QUILL_BUILD_APPS "Build the quill command line tool" ON)
 option(QUILL_WERROR "Treat compiler warnings as errors" ON)
 option(QUILL_SANITIZE "Build with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+option(QUILL_TSAN "Build with ThreadSanitizer" OFF)
 option(QUILL_NATIVE "Tune code generation for the build machine (-march=native)" OFF)
 
 include(cmake/CompilerOptions.cmake)
