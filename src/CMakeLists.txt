@@ -2,7 +2,11 @@ add_library(quill
     order_book.cpp
     matching_engine.cpp
     latency_histogram.cpp
-    engine_runner.cpp)
+    engine_runner.cpp
+    itch/codec.cpp
+    itch/publisher.cpp
+    itch/book_builder.cpp
+    sim/order_flow.cpp)
 add_library(quill::quill ALIAS quill)
 
 target_include_directories(quill PUBLIC
