@@ -1,0 +1,25 @@
+# Scripted session for `quill fix < examples/fix_session.txt`.
+# One message per line, '|' as the delimiter. BodyLength (9) and CheckSum (10) may be left
+# out because the console runs in lenient mode unless --strict is given.
+
+# Two participants log on.
+8=FIX.4.4|35=A|49=ALICE|56=QUILL|34=1|98=0|108=30|
+8=FIX.4.4|35=A|49=BOB|56=QUILL|34=1|98=0|108=30|
+
+# Alice offers 500 AAPL as an iceberg showing 100 at a time, plus a plain offer above it.
+8=FIX.4.4|35=D|49=ALICE|56=QUILL|34=2|11=A-1|55=AAPL|54=2|38=500|40=2|44=189.50|1138=100|
+8=FIX.4.4|35=D|49=ALICE|56=QUILL|34=3|11=A-2|55=AAPL|54=2|38=200|40=2|44=189.55|
+
+# Bob lifts 250: two full peaks plus half of the third, all at 189.50.
+8=FIX.4.4|35=D|49=BOB|56=QUILL|34=2|11=B-1|55=AAPL|54=1|38=250|40=2|44=189.60|59=3|
+
+# Alice shrinks her second offer in place (keeps priority), then cancels the iceberg.
+8=FIX.4.4|35=G|49=ALICE|56=QUILL|34=4|11=A-3|41=A-2|55=AAPL|54=2|38=150|40=2|44=189.55|
+8=FIX.4.4|35=F|49=ALICE|56=QUILL|34=5|11=A-4|41=A-1|55=AAPL|54=2|
+
+# A post-only bid that would cross is rejected; a fill-or-kill that cannot fill is too.
+8=FIX.4.4|35=D|49=BOB|56=QUILL|34=3|11=B-2|55=AAPL|54=1|38=10|40=2|44=189.55|18=6|
+8=FIX.4.4|35=D|49=BOB|56=QUILL|34=4|11=B-3|55=AAPL|54=1|38=1000|40=2|44=189.55|59=4|
+
+8=FIX.4.4|35=5|49=ALICE|56=QUILL|34=6|
+8=FIX.4.4|35=5|49=BOB|56=QUILL|34=5|
