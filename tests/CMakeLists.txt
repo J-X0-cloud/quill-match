@@ -19,7 +19,10 @@ add_executable(quill_tests
     order_types_test.cpp
     replace_test.cpp
     matching_engine_test.cpp
-    book_model_test.cpp)
+    book_model_test.cpp
+    spsc_queue_test.cpp
+    latency_histogram_test.cpp
+    engine_runner_test.cpp)
 
 target_include_directories(quill_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(quill_tests PRIVATE quill::quill GTest::gtest_main)
