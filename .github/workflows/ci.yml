@@ -1,0 +1,84 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: gcc ${{ matrix.build_type }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DQUILL_BUILD_BENCHMARKS=${{ matrix.build_type == 'Release' && 'ON' || 'OFF' }}
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --timeout 300
+      - name: CLI smoke test
+        run: |
+          ./build/apps/quill simulate --orders 200000 --warmup 10000 --itch-out feed.itch
+          ./build/apps/quill replay feed.itch --depth 3
+          ./build/apps/quill simulate --orders 200000 --threaded
+      - name: Benchmark smoke run
+        if: matrix.build_type == 'Release'
+        run: ./build/bench/quill_bench --benchmark_min_time=0.05s
+
+  sanitizers:
+    name: address + undefined sanitizers
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+          -DQUILL_SANITIZE=ON -DQUILL_BUILD_BENCHMARKS=OFF
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --timeout 600
+
+  thread-sanitizer:
+    name: thread sanitizer
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DQUILL_TSAN=ON -DQUILL_BUILD_BENCHMARKS=OFF -DQUILL_BUILD_APPS=OFF
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        # Recent kernels use more mmap randomisation than TSan's shadow layout allows.
+        run: setarch "$(uname -m)" -R ./build/tests/quill_tests
+
+  format:
+    name: clang-format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format 18
+        run: pip install clang-format==18.1.8
+      - name: Check formatting
+        run: |
+          git ls-files '*.cpp' '*.hpp' | xargs clang-format --dry-run --Werror
