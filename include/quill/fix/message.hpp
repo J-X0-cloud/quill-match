@@ -119,7 +119,8 @@ class Message {
   private:
     struct Slot {
         int tag = 0;
-        std::uint32_t offset = 0;
+        std::uint32_t start = 0;   // first byte of "tag="
+        std::uint32_t offset = 0;  // first byte of the value
         std::uint32_t length = 0;
     };
 

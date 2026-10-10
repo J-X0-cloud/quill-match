@@ -107,7 +107,8 @@ Message::Result Message::parse(std::string_view raw, char delimiter, bool strict
     Message message;
     message.raw_.assign(raw);
     const std::string_view text(message.raw_);
-    std::vector<std::size_t> starts;  // byte offset where each field begins
+    auto& slots = message.slots_;
+    slots.reserve(32);
 
     std::size_t pos = 0;
     while (pos < text.size()) {
@@ -125,51 +126,50 @@ Message::Result Message::parse(std::string_view raw, char delimiter, bool strict
         if (!tag_number || *tag_number <= 0 || *tag_number > 99'999) {
             return fail(ParseError::BadTagNumber);
         }
-        starts.push_back(pos);
-        message.slots_.push_back(Slot{static_cast<int>(*tag_number),
-                                      static_cast<std::uint32_t>(pos + eq + 1),
-                                      static_cast<std::uint32_t>(segment.size() - eq - 1)});
+        slots.push_back(Slot{static_cast<int>(*tag_number), static_cast<std::uint32_t>(pos),
+                             static_cast<std::uint32_t>(pos + eq + 1),
+                             static_cast<std::uint32_t>(segment.size() - eq - 1)});
         pos = end + 1;
     }
 
-    const std::vector<Field> fields = message.fields();
-    if (fields.empty() || fields[0].tag != tag::kBeginString) {
+    if (slots.empty() || slots[0].tag != tag::kBeginString) {
         return fail(ParseError::MissingBeginString, tag::kBeginString);
     }
     std::size_t next = 1;
-    const bool has_body_length = fields.size() > 1 && fields[1].tag == tag::kBodyLength;
+    const bool has_body_length = slots.size() > 1 && slots[1].tag == tag::kBodyLength;
     if (has_body_length) {
         next = 2;
     } else if (strict) {
         return fail(ParseError::MissingBodyLength, tag::kBodyLength);
     }
-    if (fields.size() <= next || fields[next].tag != tag::kMsgType) {
+    if (slots.size() <= next || slots[next].tag != tag::kMsgType) {
         return fail(ParseError::MissingMsgType, tag::kMsgType);
     }
 
-    const auto checksum_it = std::find_if(fields.begin(), fields.end(),
-                                          [](const Field& f) { return f.tag == tag::kCheckSum; });
-    if (checksum_it != fields.end() && checksum_it + 1 != fields.end()) {
+    const auto checksum_it = std::find_if(slots.begin(), slots.end(),
+                                          [](const Slot& f) { return f.tag == tag::kCheckSum; });
+    if (checksum_it != slots.end() && checksum_it + 1 != slots.end()) {
         return fail(ParseError::FieldsAfterCheckSum, tag::kCheckSum);
     }
-    if (checksum_it == fields.end()) {
+    if (checksum_it == slots.end()) {
         if (strict) {
             return fail(ParseError::MissingCheckSum, tag::kCheckSum);
         }
     } else if (strict) {
-        const std::size_t checksum_start = starts.back();
-        if (checksum_it->value.size() != 3) {
+        const std::size_t checksum_start = checksum_it->start;
+        const std::string_view declared_text = message.value(*checksum_it);
+        if (declared_text.size() != 3) {
             return fail(ParseError::CheckSumMismatch, tag::kCheckSum);
         }
-        const auto declared = to_int(checksum_it->value);
+        const auto declared = to_int(declared_text);
         if (!declared ||
             static_cast<unsigned>(*declared) != checksum(text.substr(0, checksum_start))) {
             return fail(ParseError::CheckSumMismatch, tag::kCheckSum);
         }
         // BodyLength counts from the first byte after the 9= field's delimiter up to and
         // including the delimiter that precedes 10=.
-        const auto declared_length = to_int(fields[1].value);
-        const std::size_t body_start = starts[2];
+        const auto declared_length = to_int(message.value(slots[1]));
+        const std::size_t body_start = slots[2].start;
         if (!declared_length ||
             static_cast<std::size_t>(*declared_length) != checksum_start - body_start) {
             return fail(ParseError::BodyLengthMismatch, tag::kBodyLength);
