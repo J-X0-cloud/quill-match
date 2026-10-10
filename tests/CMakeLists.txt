@@ -32,5 +32,10 @@ add_executable(quill_tests
 target_include_directories(quill_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(quill_tests PRIVATE quill::quill GTest::gtest_main)
 
+if(TARGET quill_cli)
+    target_sources(quill_tests PRIVATE cli_test.cpp)
+    target_link_libraries(quill_tests PRIVATE quill_cli)
+endif()
+
 include(GoogleTest)
 gtest_discover_tests(quill_tests DISCOVERY_TIMEOUT 60)
